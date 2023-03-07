@@ -7,12 +7,16 @@ import axios from 'axios'
 const App = () => {
   const [commits, setCommits] = useState<Commit[]>()
   const [refresh, setRefresh] = useState(true)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
     async function fetchData () {
       try {
         const response = await axios.get<Commit[]>(`${API_URL}/github`)
         setCommits(response.data)
+        setError(false)
+      } catch (error) {
+        setError(true)
       } finally {
         setRefresh(false)
       }
@@ -22,15 +26,23 @@ const App = () => {
   }, [refresh])
 
   const showCommits = () => {
-    if (!commits) {
+    let message = null
+
+    if (error) {
+      message = 'Error fetching data'
+    } else if (!commits) {
+      message = 'No commits on this repository'
+    }
+
+    if (message) {
       return (
         <div className='bg-red-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6'>
-          <dt className='text-sm font-medium text-gray-500'>💢 No commits on this repository</dt>
+          <dt className='text-sm font-medium text-gray-500'>💢 {message}</dt>
         </div>
       )
     }
 
-    return commits.map((commit, index) => <ItemList key={commit.id} commit={commit} odd={!!(index % 2)} />)
+    return commits?.map((commit, index) => <ItemList key={commit.id} commit={commit} odd={!!(index % 2)} />)
   }
 
   const handleRefresh = () => {
